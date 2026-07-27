@@ -750,15 +750,16 @@ impl ExpectServerDone {
         // 5. emit a Finished, our first encrypted message under the new keys.
 
         // 1.
-        let identity = Identity::from_peer(self.server_cert.cert_chain.0, CertificateType::X509)?
-            .ok_or(PeerMisbehaved::NoCertificatesPresented)?;
+        let purported_identity =
+            Identity::from_peer(self.server_cert.cert_chain.0, CertificateType::X509)?
+                .ok_or(PeerMisbehaved::NoCertificatesPresented)?;
 
         let peer_identity = self
             .hs
             .config
             .verifier()
             .verify_identity(&ServerIdentity {
-                identity: &identity,
+                identity: &purported_identity,
                 server_name: &self.hs.session_key.server_name,
                 ocsp_response: &self.server_cert.ocsp_response,
                 now: self.hs.config.current_time()?,
@@ -789,7 +790,7 @@ impl ExpectServerDone {
                 .verifier()
                 .verify_tls12_signature(&SignatureVerificationInput {
                     message: &message,
-                    signer: &identity.as_signer(),
+                    signer: &peer_identity.as_signer(),
                     signature,
                 })?
         };

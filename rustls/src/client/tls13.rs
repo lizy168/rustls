@@ -1136,7 +1136,7 @@ impl ExpectCertificateVerify {
         trace!("Server cert is {:?}", self.server_cert.cert_chain);
 
         // 1. Verify the certificate chain.
-        let identity = Identity::from_peer(
+        let presented_identity = Identity::from_peer(
             self.server_cert.cert_chain.0,
             self.expected_certificate_type,
         )?
@@ -1147,7 +1147,7 @@ impl ExpectCertificateVerify {
             .config
             .verifier()
             .verify_identity(&ServerIdentity {
-                identity: &identity,
+                identity: &presented_identity,
                 server_name: &self.hs.session_key.server_name,
                 ocsp_response: &self.server_cert.ocsp_response,
                 now: self.hs.config.current_time()?,
@@ -1161,7 +1161,7 @@ impl ExpectCertificateVerify {
             .verifier()
             .verify_tls13_signature(&SignatureVerificationInput {
                 message: construct_server_verify_message(&handshake_hash).as_ref(),
-                signer: &identity.as_signer(),
+                signer: &peer_identity.as_signer(),
                 signature: cert_verify,
             })?;
 
